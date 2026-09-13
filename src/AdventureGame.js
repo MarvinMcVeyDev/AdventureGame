@@ -1,297 +1,724 @@
-const readline = require("readline-sync");
-let playerName= "";
-let playerHealth = 100;
-let gold = 20;
-let currentLocation = "village"
-let visitedBefore = false;
-let gameRunning = true;
-let inventory = [];
-let weaponDamage = 0;
-let monsterDefense = 5;
-let healingPotionValue = 30;
 
-// Get player name using readline-sync
 
-/*
-Adventure Game
-This game will be a text-based game where the player will be able
-to make choices that affect the outcome of the game.
-The player will be able to choose their own path and the story will change
-based on their decisions.
-*/
+    // ===========================================
+    // The Dragon's Quest - Text Adventure Game
+    // ===========================================
 
-// Display the game title
-console.log("Welcome to the Adventure Game");
+    // Game state variables
+    let gameRunning = true;
+    let playerName = "";
+    let playerHealth = 100;
+    let playerGold = 20;
+    let currentLocation = "village";
+    let inventory = [];
 
-// Add a welcome message
-console.log("Prepare yourself for an epic journey!");
+    // ===========================
+    // Game Functions
+    // ===========================
+    // ===========================
+    // Item Templates
+    // ===========================
 
-playerName = readline.question("What is your name? ");
+    const healthPotion = {
+    name: "Health Potion",
+    type: "potion",
+    value: 5,
+    effect: 30,
+    description: "Restores 30 health points",
+    };
 
-console.log("Welcome! " + playerName);
-console.log("Your starting gold is " + gold);
+    const maxHealthPotion = {
+        name: "Super Health Potion",
+        type: "potion",
+        value: 30,
+        effect: 100,
+        description: "Restores max health.",
+    };
 
-console.log("This is you current weapon damage: " + weaponDamage);
-console.log("When you buy a sword, your weapon damage will increase by 10!");
-console.log("This is what the Monsters Defense is!: " + monsterDefense);
-console.log("Monsters can withstand some damage in combat!");
+    const woodSword = {
+    name: "Wood Sword",
+    type: "weapon",
+    value: 5,
+    effect: 10,
+    description: "A sturdy blade for combat",
+    };
 
-// Giving the potion 30 points is a good amount for the health the hero has.
+    const ironSword = {
+        name: "Iron Sword",
+        type: "weapon",
+        value: 20,
+        effect: 30,
+        description: "A blade forged from the best blacksmith in the village.",
+    };
 
-console.log("Using this potion will heal you for " + healingPotionValue + " health points!");
+    const steelSword = {
+    name: "Steel Sword",
+    type: "weapon",
+    value: 30,
+    effect: 50,
+    description: "A sword that will decimate your enemies.",
+    };
 
-console.log("This is my starting location: " + currentLocation);
+    const woodenShield = {
+    name: "Wooden Shield",
+    type: "armor",
+    value: 8,
+    effect: 5,
+    description: "Reduces damage taken in combat",
+    };
 
-console.log("Have I been here before? " + visitedBefore);
+    const ironShield = {
+    name: "Iron Shield",
+    type: "armor",
+    value: 12,
+    effect: 10,
+    description: "Provides stronger protection in combat",
+    };
 
-// ===== MAIN GAME LOOP =====
-while (gameRunning) {
-    
-    if (currentLocation === "village") {
-        console.log("\n=== VILLAGE ===");
-        console.log("You are in a peaceful village. Castles high around you, villagers going about their day. You can visit the blacksmith to buy a sword, or the shop to buy a healing potion.");
-        console.log("What would you like to do? \n (1) Visit the blacksmith, \n (2) Visit the shop, \n (3) Enter the forest, \n (4) Check your status \n (5) Quit the game.");
+    const steelShield = {
+        name: "Steel Shield",
+        type: "armor",
+        value: 20,
+        effect: 35,
+        description: "A shield for the toughest of warriors",
+    };
+
+
+    // ===========================
+    // Location Choice Functions
+    // ===========================
+    function handleQuit() {
+            const container = document.getElementById("button-container");
+            container.innerHTML = ""; // Clear the container
+            showStartUI();
+            gameRunning = false; // Stop the game
++            alert("\nThanks for playing!"); // Print a farewell message
+    }
+
+    function handleStartChoice() {
+        const container = document.getElementById("button-container");
+        container.innerHTML = ""; // Clear existing buttons
+        const textContainer = document.getElementById("text-container");
+        const contentData = [
+            {type: "h5", text: "Well, hello " + playerName + "!" + " Do you think you have what it take to slay the dragon?"}
+        ];
+        textContainer.innerHTML = ""; // Clear existing content
+        contentData.forEach(item => {
+            const element = document.createElement(item.type);
+            element.textContent = item.text;
+            textContainer.appendChild(element);
+        });
         
-        let villageChoice = readline.question("Enter your choice (1-5): ");
+        const buttons = [
+            {text: "Blacksmith", id: "blacksmith", action:() => handleBlacksmithChoice()},
+            {text: "Market", id: "market", action:() => handleMarketChoice()},
+            {text: "Forest", id: "forest", action:() => handleForestChoice()},
+            {text: "Show Location", id: "showLocation", action:() => showLocation()},
+            {text: "Inventory", id: "inventory", action:() => checkInventory()},
+            {text: "Help", id: "help", action:() => showHelp()},
+            {text: "Quit", id: "quit", action:() => handleQuit()},
+        ];
         
-        if (villageChoice === "1") {
-            currentLocation = "blacksmith";
-        } else if (villageChoice === "2") {
-            currentLocation = "shop";
-        } else if (villageChoice === "3") {
-            currentLocation = "forest";
-        } else if (villageChoice === "4") {
-            console.log("\n--- YOUR STATUS ---");
-            console.log("Name: " + playerName);
-            console.log("Health: " + playerHealth);
-            console.log("Gold: " + gold);
-            console.log("Weapon Damage: " + weaponDamage);
-            console.log("\nInventory (" + inventory.length + " slots):");
+
+        buttons.forEach(button => {
+            const btn = document.createElement("button");
+            btn.textContent = button.text;
+            btn.id = button.id;
+            btn.addEventListener("click", button.action);
+            container.appendChild(btn);
+        });
             
-            // ===== INVENTORY LOOP =====
-            if (inventory.length === 0) {
-                console.log("  [Empty]");
-            } else {
-                for (let i = 0; i < inventory.length; i++) {
-                    console.log("  [" + (i + 1) + "] " + inventory[i]);
-                }
+        }
+    
+    
+    function handleVillageChoice() {
+        const container = document.getElementById("button-container");
+            container.innerHTML = ""; // Clear existing buttons
+
+
+            const villageButtons = [
+                {text: "BlackSmith", id: "blacksmith", action:() => handleBlacksmithChoice()},
+                {text: "Market", id: "market", action:() => handleMarketChoice()},
+                {text: "Show Location", id: "showLocation", action:() => showLocation()},
+                {text: "Inventory", id: "inventory", action:() => checkInventory()},
+                {text: "Forest", id: "forest", action:() => handleForestChoice()},
+                {text: "Help", id: "help", action:() => showHelp()},
+                {text: "Quit", id: "quit", action:() => {handleQuit()}},
+            ]
+        
+        villageButtons.forEach(button => {
+            const btn = document.createElement("button");
+            btn.textContent = button.text;
+            btn.id = button.id;
+            btn.addEventListener("click", button.action);
+            container.appendChild(btn);
+        });
+
+    }
+
+    function handleBlacksmithChoice() {
+        const container = document.getElementById("button-container");
+        container.innerHTML = ""; // Clear existing buttons
+        const blacksmithButtons = [
+            {text: "Buy Weapon", id: "buy_weapon", action:() => buyFromBlacksmith(1)},
+            {text: "Buy Armor", id: "buy_armor", action:() => buyFromBlacksmith(2)},
+            {text: "Buy Shield", id: "buy_shield", action:() => buyFromBlacksmith(3)},
+            {text: "Inventory", id: "inventory", action:() => checkInventory()},
+            {text: "Show Location", id: "showLocation", action:() => showLocation()},
+            {text: "Help", id: "help", action:() => showHelp()},
+            {text: "Back", id: "back", action:() => handleCurrentLocation()},
+            {text: "Quit", id: "quit", action:() => {handleQuit()}},
+        ];
+        blacksmithButtons.forEach(button => {
+            const btn = document.createElement("button");
+            btn.textContent = button.text;
+            btn.id = button.id;
+            btn.addEventListener("click", button.action);
+            container.appendChild(btn);
+        });
+    }
+
+    
+
+    function handleMarketChoice() {
+        const container = document.getElementById("button-container");
+        container.innerHTML = ""; // Clear existing buttons
+        const marketButtons = [
+            {text: "Buy Potion", id: "buy_potion", action:() => buyFromMarket(1)},
+            {text: "Buy Map", id: "buy_map", action:() => buyFromMarket(2)},
+            {text: "Village", id: "village", action:() => handleVillageChoice()},
+            {text: "Show Location", id: "showLocation", action:() => showLocation()},
+            {text: "Inventory", id: "inventory", action:() => checkInventory()},
+            {text: "Help", id: "help", action:() => showHelp()},
+            {text: "Quit", id: "quit", action:() => {handleQuit()}},
+            {text: "Back", id: "back", action:() => handleCurrentLocation()},
+        ];
+        marketButtons.forEach(button => {
+            const btn = document.createElement("button");
+            btn.textContent = button.text;
+            btn.id = button.id;
+            btn.addEventListener("click", button.action);
+            container.appendChild(btn);
+        });
+
+    }
+
+    function handleForestChoice() {
+        const container = document.getElementById("button-container");
+        container.innerHTML = ""; // Clear existing buttons
+        const forestButtons = [
+            {text: "Fight Monster", id: "fight_monster", action:() => handleCombat(false)},
+            {text: "Search for Treasure", id: "search_treasure", action:() => searchForTreasure()},
+            {text: "Inventory", id: "inventory", action:() => checkInventory()},
+            {text: "Village", id: "village", action:() => handleVillageChoice()},
+            {text: "Mountains", id: "mountains", action:() => move(4)},
+            {text: "Show Location", id: "showLocation", action:() => showLocation()},
+            {text: "Inventory", id: "inventory", action:() => checkInventory()},
+            {text: "Help", id: "help", action:() => showHelp()},
+            {text: "Quit", id: "quit", action:() => {handleQuit()}},
+            {text: "Back", id: "back", action:() => handleCurrentLocation()},
+        ];
+        forestButtons.forEach(button => {
+            const btn = document.createElement("button");
+            btn.textContent = button.text;
+            btn.id = button.id;
+            btn.addEventListener("click", button.action);
+            container.appendChild(btn);
+        });
+    
+    }
+
+    function handleMountainsChoice() {
+        const container = document.getElementById("button-container"); 
+        container.innerHTML = ""; // Clear existing buttons
+        const mountainsButtons = [
+            {text: "Fight Monster", id: "fight_monster", action:() => handleCombat(true)},
+            {text: "Search for Treasure", id: "search_treasure", action:() => searchForTreasure()},
+            {text: "inventory", id: "inventory", action:() => checkInventory()},
+            {text: "Forest", id: "forest", action:() => move(2)},
+            {text: "Help", id: "help", action:() => showHelp()},
+            {text: "Quit", id: "quit", action:() => {handleQuit()}},
+            {text: "Back", id: "back", action:() => handleCurrentLocation()},
+        ];
+        mountainsButtons.forEach(button => {
+            const btn = document.createElement("button");
+            btn.textContent = button.text;
+            btn.id = button.id;
+            btn.addEventListener("click", button.action);
+            container.appendChild(btn);
+        });
+        
+    }
+
+    function handleCurrentLocation() {
+        if (currentLocation === "village") {
+            handleVillageChoice();
+        }
+        else if (currentLocation === "blacksmith") {
+            handleBlacksmithChoice();
+        }
+        else if (currentLocation === "market") {
+            handleMarketChoice();
+        }
+        else if (currentLocation === "forest") {
+            handleForestChoice();
+        }
+        else if (currentLocation === "mountains") {
+            handleMountainsChoice();
+        }
+        else {
+            throw "Unknown location.";
+        }
+
+
+    }
+
+    // ===========================
+    // Helper Functions
+    // ===========================
+
+    function getItemsByType(type) {
+    return inventory.filter((item) => item.type === type);
+    }
+
+    function getBestItem(type) {
+    const items = getItemsByType(type);
+
+    if (items.length === 0) {
+        return null;
+    }
+
+    return items.reduce((best, current) => {
+        return current.effect > best.effect ? current : best;
+    });
+    }
+
+    function hasGoodEquipment() {
+    const hasSteelSword = inventory.some(
+        (item) => item.name === "Steel Sword" && item.type === "weapon"
+    );
+    const hasArmor = inventory.some((item) => item.type === "armor");
+
+    return hasSteelSword && hasArmor;
+    }
+
+    function updateHealth(amount) {
+    playerHealth += amount;
+
+    if (playerHealth > 100) {
+        playerHealth = 100;
+        console.log("You're at full health!");
+    }
+
+    if (playerHealth < 0) {
+        playerHealth = 0;
+        console.log("You're gravely wounded!");
+    }
+
+    console.log("Health is now: " + playerHealth);
+    return playerHealth;
+    }
+
+    function isValidChoice(input, min, max) {
+    const choiceNum = parseInt(input);
+    return !isNaN(choiceNum) && choiceNum >= min && choiceNum <= max;
+    }
+
+    // ===========================
+    // Display Functions
+    // ===========================
+    function hideContainerButtons() {
+        const buttons = document.querySelectorAll(".container-button");
+        buttons.forEach((button) => {
+            button.style.display = "none";
+        });
+    }
+    function hideStartUI() {
+        const startButton = document.getElementById("start-button");
+        if (startButton) {
+            startButton.style.display = "none";
+        }
+        const playerNameInput = document.getElementById("playerNameInput");
+        if (playerNameInput) {
+            playerNameInput.style.display = "none";
+        }
+    }
+    function showStartUI() {
+        const startButton = document.getElementById("start-button");
+        if (startButton) {
+            startButton.style.display = "inline";
+        }
+        const playerNameInput = document.getElementById("playerNameInput");
+        if (playerNameInput) {
+            playerNameInput.style.display = "inline";
+        }
+    }
+
+    function showStatus() {
+    console.log("\n=== " + playerName + "'s Status ===");
+    console.log("Health: " + playerHealth);
+    console.log("Gold: " + playerGold);
+    console.log("Location: " + currentLocation);
+
+    console.log("Inventory:");
+    if (inventory.length === 0) {
+        console.log("  Nothing in inventory");
+    } else {
+        inventory.forEach((item, index) => {
+        console.log(
+            "  " + (index + 1) + ". " + item.name + " - " + item.description
+        );
+        });
+    }
+    }
+
+    function checkInventory() {
+    alert("\n=== INVENTORY ===");
+
+    if (inventory.length === 0 && playerGold == 0) {
+        alert("Your inventory is empty!");
+    } else if (inventory.length > 0) {
+        alert("Items in inventory:");
+    } else if (playerGold > 0) {
+        alert("Gold: " + playerGold);
+        return;
+    }
+
+    inventory.forEach((item, index) => {
+        console.log(
+        "  " + (index + 1) + ". " + item.name + " - " + item.description
+        );
+    });
+    }
+
+    function showFinalStats() {
+    console.log("\n=== FINAL STATS ===");
+    console.log("Player: " + playerName);
+    console.log("Health: " + playerHealth);
+    console.log("Gold: " + playerGold);
+    console.log("Location: " + currentLocation);
+    checkInventory();
+    }
+
+    function showHelp() {
+    console.log("\n=== HELP ===");
+    console.log("Your goal is to defeat the dragon in the mountains.");
+    console.log("Buy better weapons and armor before taking on dangerous enemies.");
+    console.log("Steel Sword + any armor is required to face the dragon.");
+    console.log("Health potions restore health.");
+    console.log("Armor reduces incoming damage.");
+    console.log("Explore the forest for treasure and battles.");
+    }
+
+    function showLocation() {
+        const contentData = [
+            {type: "h3", text: "You are currently at the " + currentLocation}
+        ]
+    console.log("\n=================================");
+    console.log("Current Location: " + currentLocation);
+    console.log("=================================");
+    }
+
+    // ===========================
+    // Shopping Functions
+    // ===========================
+
+    function buyItem(item) {
+    if (playerGold >= item.value) {
+        playerGold -= item.value;
+        inventory.push({ ...item });
+        console.log("\nYou bought " + item.name + " for " + item.value + " gold.");
+        console.log("Gold remaining: " + playerGold);
+    } else {
+        console.log("\nYou do not have enough gold.");
+    }
+    }
+
+    function buyFromBlacksmith() {
+        const contentData = [
+            {type: "h3", text: "Welcome in sire! What can I get for you today? Are you looking for a new weapon? Or maybe a new shield?"},
+
+        ];
+        contentData.push({text: "Back", id: "back", action:() => handleCurrentLocation()});
+        const speech = document.getElementById("text-container");
+        speech.innerHTML = "";
+        contentData.forEach(item => {
+            if (item.type === "h3") {
+                const h3 = document.createElement("h3");
+                h3.textContent = item.text;
+                speech.appendChild(h3);
             }
-        } else if (villageChoice === "5") {
-            console.log("Thanks for playing, " + playerName + "! Goodbye!");
+        });
+
+        const container = document.getElementById("button-container");
+        container.innerHTML = "";
+        const blacksmithItems = [woodSword, ironSword, steelSword];
+        blacksmithItems.forEach((item, index) => {
+            console.log((index + 1) + ". " + item.name + " - " + item.description);
+            const button = document.createElement("button");
+            button.textContent = (index + 1) + ". " + item.name + " - " + item.description;
+            button.onclick = () => buyItem(item);
+            container.appendChild(button);
+        });
+    }
+    
+
+    function buyFromMarket(choiceNum) {
+    const contentData = [
+        {type: "h3", text: "Welcome in! Everything here is for sale. I'd be happy to help you find what you need."},
+    ];
+    const speech = document.getElementById("text-container");
+    speech.innerHTML = "";
+    contentData.forEach(item => {
+        if (item.type === "h3") {
+            const h3 = document.createElement("h3");
+            h3.textContent = item.text;
+            speech.appendChild(h3);
+        }
+    });
+
+    const container = document.getElementById("button-container");
+    container.innerHTML = "";
+    const marketItems = [healthPotion, maxHealthPotion, woodenShield, ironShield, steelShield];
+    marketItems.forEach((item, index) => {
+        console.log((index + 1) + ". " + item.name + " - " + item.description);
+        const button = document.createElement("button");
+        button.textContent = (index + 1) + ". " + item.name + " - " + item.description;
+        button.onclick = () => buyItem(item);
+        container.appendChild(button);
+    });
+}
+
+    // ===========================
+    // Combat Functions
+    // ===========================
+
+    function handleCombat(isDragon = false) {
+    const enemy = isDragon
+        ? { name: "Dragon", damage: 20, health: 150, reward: 50 }
+        : { name: "Monster", damage: 10, health: 50, reward: 30 };
+
+    const bestWeapon = getBestItem("weapon");
+    const bestArmor = getBestItem("armor");
+
+    const weaponDamage = bestWeapon ? bestWeapon.effect : 0;
+    const armorProtection = bestArmor ? bestArmor.effect : 0;
+
+    console.log("\n=== Combat Begins! ===");
+    console.log("Enemy: " + enemy.name);
+    console.log("Enemy Health: " + enemy.health);
+    console.log("Enemy Damage: " + enemy.damage);
+
+    if (bestWeapon) {
+        console.log(
+        "Weapon being used: " +
+            bestWeapon.name +
+            " (Damage: " +
+            bestWeapon.effect +
+            ")"
+        );
+    } else {
+        console.log("Weapon being used: None");
+    }
+
+    if (bestArmor) {
+        console.log(
+        "Armor being used: " +
+            bestArmor.name +
+            " (Protection: " +
+            bestArmor.effect +
+            ")"
+        );
+    } else {
+        console.log("Armor being used: None");
+    }
+
+    if (isDragon && !hasGoodEquipment()) {
+        console.log("\nYou are not equipped well enough to face the dragon!");
+        console.log("You need the Steel Sword and at least one armor item.");
+        return false;
+    }
+
+    if (!bestWeapon) {
+        console.log("\nWithout a weapon, you must retreat!");
+        updateHealth(isDragon ? -50 : -20);
+        return false;
+    }
+    while (enemy.health > 0 && playerHealth > 0) {
+    console.log("\nYou attack with your " + bestWeapon.name + "!");
+    console.log("You deal " + weaponDamage + " damage!");
+
+    enemy.health -= weaponDamage;
+    console.log("The " + enemy.name.toLowerCase() + " has " + enemy.health + " health remaining.");
+
+    if (enemy.health <= 0) {
+        console.log("Victory! You defeated the " + enemy.name.toLowerCase() + "!");
+        console.log("You found " + enemy.reward + " gold!");
+        playerGold += enemy.reward;
+
+        if (isDragon) {
+            console.log("\nThe dragon has been slain!");
+            console.log("You completed your quest and saved the land!");
+            console.log("The King deems you worthy of knighthood and rewards you with a title and land.");
+            showFinalStats();
             gameRunning = false;
-        } else {
-            console.log("Invalid choice. Please try again.");
+            showStartUI();
         }
+
+        break;
     }
-    else if (currentLocation === "blacksmith") {
-        console.log("\n=== BLACKSMITH ===");
-        console.log("You are at the blacksmith. The blacksmith, Clyde, greets you warmly. He has a shiny sword on display that you can buy for 20 gold.");
-        console.log("What would you like to do? \n (1) Buy the sword for 20 gold, \n (2) Return to the village.");
-        
-        let blacksmithChoice = readline.question("Enter your choice (1-2): ");
-        
-        if (blacksmithChoice === "1") {
-            if (gold >= 20) {
-                gold -= 20;
-                weaponDamage = 10;
-                inventory.push("Sword");
-                console.log("You bought a shiny sword! Your weapon damage increased to " + weaponDamage + "! You now have " + gold + " gold remaining.");
-            } else {
-                console.log("You don't have enough gold to buy the sword. You need 20 gold but only have " + gold + ".");
-            }
-            currentLocation = "village";
-        } else if (blacksmithChoice === "2") {
-            currentLocation = "village";
-        } else {
-            console.log("Invalid choice. Please try again.");
-        }
-    }
-    else if (currentLocation === "shop") {
-        console.log("\n=== SHOP ===");
-        console.log("You are at the shop. The shopkeeper smiles at you. She has healing potions for sale.");
-        console.log("What would you like to do? \n (1) Buy a healing potion for 10 gold, \n (2) Return to the village.");
-        
-        let shopChoice = readline.question("Enter your choice (1-2): ");
-        
-        if (shopChoice === "1") {
-            if (gold >= 10) {
-                gold -= 10;
-                inventory.push("Healing Potion");
-                console.log("You bought a healing potion! You now have " + gold + " gold remaining.");
-            } else {
-                console.log("You don't have enough gold to buy a potion. You need 10 gold but only have " + gold + ".");
-            }
-            currentLocation = "village";
-        } else if (shopChoice === "2") {
-            currentLocation = "village";
-        } else {
-            console.log("Invalid choice. Please try again.");
-        }
-    }
-    else if (currentLocation === "forest") {
-        console.log("\n=== FOREST ===");
-        console.log("You venture into a dark forest. The air is cold and silent...");
-        console.log("Suddenly, a monster appears before you!");
-        console.log("What would you like to do? \n (1) Fight the monster, \n (2) Use a healing potion, \n (3) Run back to the village.");
-        
-        let forestChoice = readline.question("Enter your choice (1-3): ");
-        
-        if (forestChoice === "1") {
-            console.log("\n*** BATTLE START ***");
-            let monsterHealth = 25;
-            let monsterMaxHealth = 25;
-            let battleRound = 1;
-            let isDefending = false;
-            let fleeAttempts = 0;
-            let maxFleeAttempts = 2;
-            let battleActive = true;
-            
-            // ===== BATTLE LOOP =====
-            while (battleActive && playerHealth > 0 && monsterHealth > 0) {
-                console.log("\n--- ROUND " + battleRound + " ---");
-                console.log("[" + playerName + " HP: " + playerHealth + " | Monster HP: " + Math.max(0, monsterHealth) + "]");
-                
-                // Player's turn
-                console.log("\nYour turn! What do you do?");
-                console.log("(1) Attack  (2) Defend  (3) Use Potion  (4) Attempt Flee");
-                
-                let battleAction = readline.question("Choose action (1-4): ");
-                
-                // Reset defense flag for this round
-                let playerDefended = false;
-                let damageToMonster = 0;
-                
-                if (battleAction === "1") {
-                    // ATTACK ACTION
-                    let baseDamage = 5 + weaponDamage;
-                    let critChance = Math.random();
-                    
-                    if (critChance > 0.75) {
-                        damageToMonster = Math.round(baseDamage * 1.5);
-                        console.log("*** CRITICAL HIT! ***");
-                    } else {
-                        damageToMonster = baseDamage;
-                    }
-                    
-                    damageToMonster = Math.max(1, damageToMonster - monsterDefense);
-                    monsterHealth -= damageToMonster;
-                    console.log("You lunge forward and strike the monster!");
-                    console.log("Monster takes " + damageToMonster + " damage!");
-                    
-                } else if (battleAction === "2") {
-                    // DEFEND ACTION
-                    playerDefended = true;
-                    console.log("You take a defensive stance, ready to reduce incoming damage!");
-                    
-                } else if (battleAction === "3") {
-                    // USE POTION ACTION
-                    if (inventory.includes("Healing Potion")) {
-                        let healAmount = healingPotionValue;
-                        playerHealth = Math.min(100, playerHealth + healAmount);
-                        inventory.splice(inventory.indexOf("Healing Potion"), 1);
-                        console.log("You drink a healing potion and restore " + healAmount + " health!");
-                        console.log("Current health: " + playerHealth);
-                    } else {
-                        console.log("You don't have any healing potions! The monster attacks!");
-                        let monsterDamage = Math.round(Math.random() * 5) + 10;
-                        playerHealth -= monsterDamage;
-                        console.log("The monster hits you for " + monsterDamage + " damage!");
-                    }
-                    
-                } else if (battleAction === "4") {
-                    // FLEE ACTION
-                    fleeAttempts++;
-                    let fleeChance = Math.random();
-                    
-                    if (fleeAttempts <= maxFleeAttempts && fleeChance > 0.4) {
-                        console.log("You manage to escape from the monster!");
-                        battleActive = false;
-                        currentLocation = "village";
-                    } else if (fleeAttempts > maxFleeAttempts) {
-                        console.log("The monster blocks your escape path! You must fight!");
-                        let monsterDamage = 15;
-                        playerHealth -= monsterDamage;
-                        console.log("The monster attacks you for " + monsterDamage + " damage during your escape attempt!");
-                    } else {
-                        console.log("You fail to run away!");
-                        let monsterDamage = 12;
-                        playerHealth -= monsterDamage;
-                        console.log("The monster catches you and deals " + monsterDamage + " damage!");
-                    }
-                    
-                } else {
-                    console.log("Invalid action! The monster seizes the opportunity to attack!");
-                    let monsterDamage = 18;
-                    playerHealth -= monsterDamage;
-                    console.log("The monster hits you for " + monsterDamage + " damage!");
-                }
-                
-                // If player didn't flee, monster attacks back
-                if (battleActive && monsterHealth > 0 && battleAction !== "4") {
-                    console.log("\nMonster's turn!");
-                    
-                    // Monster decides to attack or use special ability
-                    let monsterAction = Math.random();
-                    let incomingDamage = 0;
-                    
-                    if (monsterAction > 0.7) {
-                        // Monster does a power attack
-                        incomingDamage = 20;
-                        console.log("The monster unleashes a fierce power attack for " + incomingDamage + " damage!");
-                    } else {
-                        // Normal attack
-                        incomingDamage = Math.round(Math.random() * 8) + 8;
-                        console.log("The monster claws at you for " + incomingDamage + " damage!");
-                    }
-                    
-                    // Apply defense reduction
-                    if (playerDefended) {
-                        incomingDamage = Math.round(incomingDamage * 0.5);
-                        console.log("Your defensive stance reduces the damage to " + incomingDamage + "!");
-                    }
-                    
-                    playerHealth -= incomingDamage;
-                }
-                
-                // Check battle status
-                if (monsterHealth <= 0) {
-                    console.log("\n*** VICTORY! ***");
-                    console.log("You have defeated the monster!");
-                    gold += 50;
-                    console.log("You looted 50 gold!");
-                    battleActive = false;
-                    currentLocation = "village";
-                } else if (playerHealth <= 0) {
-                    console.log("\n*** DEFEAT! ***");
-                    console.log("You have been slain by the monster...");
-                    gameRunning = false;
-                    battleActive = false;
-                }
-                
-                battleRound++;
-            }
-        } else if (forestChoice === "2") {
-            if (inventory.includes("Healing Potion")) {
-                playerHealth = Math.min(100, playerHealth + healingPotionValue);
-                inventory.splice(inventory.indexOf("Healing Potion"), 1);
-                console.log("You used a healing potion! You now have " + playerHealth + " health.");
-                currentLocation = "village";
-            } else {
-                console.log("You don't have any healing potions!");
-            }
-        } else if (forestChoice === "3") {
-            console.log("You run back to the village!");
-            currentLocation = "village";
-        } else {
-            console.log("Invalid choice. Please try again.");
-        }
-    }
-    
-    // Check if player has died
+
+    let damageTaken = enemy.damage - armorProtection;
+    damageTaken = Math.max(damageTaken, 1);
+
+    console.log("The " + enemy.name.toLowerCase() + " attacks!");
+    console.log("Your armor reduces the damage by " + armorProtection + ".");
+    console.log("You take " + damageTaken + " damage.");
+
+    updateHealth(-damageTaken);
+
     if (playerHealth <= 0) {
-        console.log("You have died. Game Over!");
-        gameRunning = false;
+        console.log("\nYou were defeated!");
+        return false;
     }
 }
 
+return true;
+    }
 
+    // ===========================
+    // Item Functions
+    // ===========================
+
+    function useItem() {
+    if (inventory.length === 0) {
+        console.log("\nYou have no items!");
+        return false;
+    }
+
+    console.log("\n=== Inventory ===");
+    inventory.forEach((item, index) => {
+        console.log(index + 1 + ". " + item.name);
+    });
+
+    let choice = readline.question("Use which item? (number or 'cancel'): ");
+
+    if (choice.toLowerCase() === "cancel") {
+        return false;
+    }
+
+    let index = parseInt(choice) - 1;
+
+    if (index >= 0 && index < inventory.length) {
+        let item = inventory[index];
+
+        if (item.type === "potion") {
+        console.log("\nYou drink the " + item.name + ".");
+        updateHealth(item.effect);
+        inventory.splice(index, 1);
+        return true;
+        } else if (item.type === "weapon") {
+        console.log("\nYou ready your " + item.name + " for battle.");
+        return true;
+        } else if (item.type === "armor") {
+        console.log("\nYou equip your " + item.name + ".");
+        return true;
+        } else {
+        console.log("\nYou can't use that right now.");
+        return false;
+        }
+    } else {
+        console.log("\nInvalid item number!");
+        return false;
+    }
+    }
+
+    // ===========================
+    // Exploration / Movement
+    // ===========================
+
+    function searchForTreasure() {
+    const goldFound = Math.floor(Math.random() * 11) + 5;
+    playerGold += goldFound;
+    alert("\nYou found " + goldFound + " gold!");
+    }
+
+    function move(choiceNum) {
+    let success = false;
+
+    if (currentLocation === "village") {
+        if (choiceNum === 1) {
+        currentLocation = "blacksmith";
+        console.log("\nYou enter the blacksmith.");
+        success = true;
+        } else if (choiceNum === 2) {
+        currentLocation = "market";
+        console.log("\nYou enter the market.");
+        success = true;
+        } else if (choiceNum === 3) {
+        currentLocation = "forest";
+        console.log("\nYou travel into the forest.");
+        success = true;
+        }
+    } else if (currentLocation === "blacksmith") {
+        if (choiceNum === 3) {
+        currentLocation = "village";
+        console.log("\nYou return to the village.");
+        success = true;
+        }
+    } else if (currentLocation === "market") {
+        if (choiceNum === 4) {
+        currentLocation = "village";
+        console.log("\nYou return to the village.");
+        success = true;
+        }
+    } else if (currentLocation === "forest") {
+        if (choiceNum === 4) {
+        currentLocation = "village";
+        console.log("\nYou return to the village.");
+        success = true;
+        } else if (choiceNum === 5) {
+        if (hasGoodEquipment()) {
+            currentLocation = "mountains";
+            console.log("\nYou make your way into the mountains.");
+            success = true;
+        } else {
+            console.log("\nThe mountains are too dangerous right now.");
+            console.log("You should get better equipment first.");
+            success = false;
+        }
+        }
+    } else if (currentLocation === "mountains") {
+        if (choiceNum === 4) {
+        currentLocation = "forest";
+        console.log("\nYou return to the forest.");
+        success = true;
+        }
+    }
+
+    return success;
+    }
+
+    // ===========================
+    // Main Game Loop
+    // ===========================
+    
+
+    const button = document.getElementById("start-button");
+
+    button.addEventListener("click", () => {
+        const playerNameInput = document.getElementById("playerNameInput");
+        playerName = playerNameInput.value.trim();
+        if (playerName === "") {
+            alert("Please enter your name to start the game.");
+            const playerName = playerNameInput.value;
+            return;
+        } else {
+            handleStartChoice();
+            hideStartUI();
+        }
+        
+    });
+    
+
+    // End of script
